@@ -86,7 +86,7 @@ class Prog(object):
                     sql = """
                     insert into om_jkxx_middleware
                     values (
-                        sys_guid(), '%s', %s, %s, %s, %s, %s, to_date('%s', 'yyyy-mm-dd hh24:mi:ss')
+                        sys_guid(), '%s', %s, %s, %s, %s, %s, to_date('%s', 'yyyy-mm-dd hh24:mi:ss'), ''
                     )
                     """ % (tom.ipPort, req, jvm["MemoryUsed"], jvm["FreeMemory"], jvm["TotalMemory"], jvm["MaxMemory"], checkTime)
                     cr.execute(sql)
@@ -94,7 +94,7 @@ class Prog(object):
                     cr.close()
                     db.close()
                 except Exception as e:
-                    print(e)
+                    print('OM_JKXX_MIDDLEWARE表内存情况插入失败：' + str(e))
 
                 if jvm["MemoryUsed"] > 70 and jvm["MemoryUsed"] <= 80:
                     try:
@@ -116,7 +116,7 @@ class Prog(object):
                         cr.close()
                         db.close()
                     except Exception as e:
-                        print(e)
+                        print('OM_WARNING表JVM内存告警插入失败：' + str(e))
 
                 if jvm["MemoryUsed"] > 80 and jvm["MemoryUsed"] <= 90:
                     try:
@@ -138,7 +138,7 @@ class Prog(object):
                         cr.close()
                         db.close()
                     except Exception as e:
-                        print(e)
+                        print('OM_WARNING表JVM内存告警插入失败：' + str(e))
 
                 if jvm["MemoryUsed"] > 90:
                     try:
@@ -160,7 +160,7 @@ class Prog(object):
                         cr.close()
                         db.close()
                     except Exception as e:
-                        print(e)
+                        print('OM_WARNING表JVM内存告警插入失败：' + str(e))
             else:
                 print("\tFailed.")
 
@@ -277,7 +277,7 @@ class Prog(object):
                         cr.execute(sql)
                         db.commit()
                 except Exception as e:
-                    print(e)
+                    print('OM_WARNING表设备存储告警插入失败：' + str(e))
 
 
                 diskTotal += psutil.disk_usage(i.mountpoint).total
@@ -306,7 +306,7 @@ class Prog(object):
             cr.close()
             db.close()
         except Exception as e:
-            print(e)
+            print('OM_JKXX_SERVER表服务器信息插入失败：' + str(e))
 
         if dd["CPUUsed"] > 70 and dd["CPUUsed"] <= 80:
             try:
@@ -328,7 +328,7 @@ class Prog(object):
                 cr.close()
                 db.close()
             except Exception as e:
-                print(e)
+                print('OM_WARNING表内存告警插入失败：' + str(e))
                 
 
         if dd["CPUUsed"] > 80 and dd["CPUUsed"] <= 90:
@@ -351,7 +351,7 @@ class Prog(object):
                 cr.close()
                 db.close()
             except Exception as e:
-                print(e)
+                print('OM_WARNING表CPU告警插入失败：' + str(e))
 
         if dd["CPUUsed"] > 90:
             try:
@@ -373,7 +373,7 @@ class Prog(object):
                 cr.close()
                 db.close()
             except Exception as e:
-                print(e)
+                print('OM_WARNING表CPU告警插入失败：' + str(e))
 
         if dd["MemoryUsed"] > 70 and dd["MemoryUsed"] <= 80:
             try:
@@ -395,7 +395,7 @@ class Prog(object):
                 cr.close()
                 db.close()
             except Exception as e:
-                print(e)
+                print('OM_WARNING表内存告警插入失败：' + str(e))
 
         if dd["MemoryUsed"] > 80 and dd["MemoryUsed"] <= 90:
             try:
@@ -417,7 +417,7 @@ class Prog(object):
                 cr.close()
                 db.close()
             except Exception as e:
-                print(e)
+                print('OM_WARNING表内存告警插入失败：' + str(e))
 
         if dd["MemoryUsed"] > 90:
             try:
@@ -439,7 +439,7 @@ class Prog(object):
                 cr.close()
                 db.close()
             except Exception as e:
-                print(e)
+                print('OM_WARNING表内存告警插入失败：' + str(e))
 
         return dd
 
@@ -461,14 +461,17 @@ class Tomcat(object):
         self.reqCountB = 0
         self.reqCountA = 0
         self.checkCount = 0
+        self.s = rq.Session()
+        self.s.auth = (self.user, self.password)
 
     def probeLogin(self, user, password):
-        auth = (user, password)
+        #auth = (user, password)
         url = "%s/probe" % self.ipPort
 
         try:
 
-            mainGet = rq.get(url, auth=auth)
+            #mainGet = rq.get(url, auth=auth)
+            mainGet = self.s.get(url)
 
             resp = mainGet.status_code
 
@@ -483,10 +486,11 @@ class Tomcat(object):
             return False
 
     def reqCheck(self, user, password):
-        auth = (user, password)
+        #auth = (user, password)
         url = "%s/probe/index.htm" % self.ipPort
 
-        mainGet = rq.get(url, auth=auth)
+        #mainGet = rq.get(url, auth=auth)
+        mainGet = self.s.get(url)
 
         resp = mainGet.status_code
 
@@ -532,10 +536,11 @@ class Tomcat(object):
             return 0
 
     def jvmCheck(self, user, password):
-        auth = (user, password)
+        #auth = (user, password)
         url = "%s/probe/sysinfo.htm" % self.ipPort
 
-        mainGet = rq.get(url, auth=auth)
+        #mainGet = rq.get(url, auth=auth)
+        mainGet = self.s.get(url)
 
         resp = mainGet.status_code
 
